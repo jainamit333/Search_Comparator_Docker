@@ -82,6 +82,31 @@
         </form>
     </div>
 
+
+
+    <div class="col-md-6" style="border: 3px saddlebrown solid;padding: 3%">
+        <h3>JSON COMPARE FOR FLIGHTS :Chalta Hi rahega .. wait karo ab</h3>
+        <form method="post" action="/searchcomparebatchsmart" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>File 1</label><input type="file" class="form-control" name = "batch" required/></div>
+
+
+            <div class="form-group">
+                <label>Id for Comparator 1</label><input type="text" name="dictionary_id_1" class="form-control" required></div>
+            <div class="form-group">
+                <label>Id for Comparator 2</label><input type="text" name="dictionary_id_2" class="form-control" required></div>
+
+
+            <div class="form-group">
+                <label>Services To Be Executed</label><br>
+                <input type="text" name="service"  class="form-control"><br>
+
+            </div>
+
+            <button type="submit" class="btn btn-sm btn-primary">Start Comparing</button>
+        </form>
+    </div>
+
 </div>
 
 
