@@ -1,0 +1,223 @@
+<html>
+
+
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+
+<body>
+
+<div class="row">
+
+
+    <div>
+
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Counter Report</a></li>
+            <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Attribtes Wise Comparision Result</a></li>
+            <li role="presentation"><a href="#messages" aria-controls="messages" role="tab" data-toggle="tab">Root Level Attribute Difference</a></li>
+            <li role="presentation"><a href="#messages2" aria-controls="messages2" role="tab" data-toggle="tab">Attributes missing in New Json</a></li>
+
+        </ul>
+
+        <!-- Tab panes -->
+        <div class="tab-content">
+            <div role="tabpanel" class="tab-pane active" id="home">
+
+                <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+                    {% set counter = 0 %}
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingOne">
+                            <h4 class="panel-title">
+                                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#A{{ counter }}" aria-expanded="true" aria-controls="collapseOne">
+                                    OPEN
+
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="A{{ counter }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+                            {% set counter = counter+1 %}
+                            <div class="panel-body">
+                                <ul>
+                                    {% for val in data %}
+                                    <li>{{ val }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <div role="tabpanel" class="tab-pane" id="profile">
+
+                <div class="panel-group" id="accordion2" role="tablist" aria-multiselectable="true">
+                    {% set counter = 0 %}
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingOne2">
+                            <h4 class="panel-title">
+                                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#AB{{ counter }}" aria-expanded="true" aria-controls="collapseOne">
+                                    OPEN
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="AB{{ counter }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+                            {% set counter = counter+1 %}
+                            <div class="panel-body">
+
+                                <div class="panel-group" id="accordion3" role="tablist" aria-multiselectable="true">
+                                    {%  for key2 in data2.iterkeys()%}
+                                    {% if data2[key2]|length -1 > 1 %}
+                                    <div class="panel panel-default">
+                                        <div class="panel-heading" role="tab" id="headingOne4">
+                                            <h4 class="panel-title">
+                                                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#ABC{{ counter }}" aria-expanded="true" aria-controls="collapseOne">
+                                                    {{ key2 }}<span class="badge"><b >{{ data2[key2]|length -1 }} </b></span>
+                                                </a>
+                                            </h4>
+                                        </div>
+                                        <div id="ABC{{ counter }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+                                            {% set counter = counter+1 %}
+                                            <div class="panel-body">
+                                                <ul>
+                                                    {% for val in data2[key2] %}
+                                                    <li>{{ val }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+            <div role="tabpanel" class="tab-pane" id="messages">
+
+                <div class="panel-group" id="accordion4" role="tablist" aria-multiselectable="true">
+                    {% set counter = 0 %}
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingOne5">
+                            <h4 class="panel-title">
+                                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#qw{{ counter }}" aria-expanded="true" aria-controls="collapseOne">
+                                    OPEN
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="qw{{ counter }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+                            {% set counter = counter+1 %}
+                            <div class="panel-body">
+
+                                <div class="panel-group" id="accordion5" role="tablist" aria-multiselectable="true">
+                                    {%  for key2 in data3.iterkeys()%}
+                                    {%  if data3[key2][0]|length + data3[key2][1]|length > 0%}
+                                    <div class="panel panel-default">
+                                        <div class="panel-heading" role="tab" id="headingOne7">
+                                            <h4 class="panel-title">
+                                                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#qwe{{ counter }}" aria-expanded="true" aria-controls="collapseOne">
+                                                    {{ key2 }}<span class="badge"><b >{{ data3[key2][0]|length + data3[key2][1]|length}} </b></span>
+
+                                                </a>
+                                            </h4>
+                                        </div>
+                                        <div id="qwe{{ counter }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+                                            {% set counter = counter+1 %}
+                                            <div class="panel-body">
+                                                <ul>
+                                                    {% for val in data3[key2] %}
+                                                    <li>{{ val }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+            </div>
+            <div role="tabpanel" class="tab-pane" id="messages2">
+
+                <div class="panel-group" id="accordion9" role="tablist" aria-multiselectable="true">
+                    {% set counter = 0 %}
+
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab" id="headingOne9">
+                            <h4 class="panel-title">
+                                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#ABCDEF{{ counter }}" aria-expanded="true" aria-controls="collapseOne">
+                                    OPEN
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="ABCDEF{{ counter }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+                            {% set counter = counter+1 %}
+                            <div class="panel-body">
+
+                                <div class="panel-group" id="accordion99" role="tablist" aria-multiselectable="true">
+                                    {%  for key2 in data4.iterkeys()%}
+                                    {% if data4[key2]|length  > 0 %}
+                                    <div class="panel panel-default">
+                                        <div class="panel-heading" role="tab" id="headingOne77">
+                                            <h4 class="panel-title">
+                                                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#ABCDEFG{{ counter }}" aria-expanded="true" aria-controls="collapseOne">
+                                                    {{ key2 }}<span class="badge"><b >{{ data4[key2]|length}} </b></span>
+
+                                                </a>
+                                            </h4>
+                                        </div>
+                                        <div id="ABCDEFG{{ counter }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+                                            {% set counter = counter+1 %}
+                                            <div class="panel-body">
+                                                <ul>
+                                                    {% for val in data4[key2] %}
+                                                    <li>{{ val }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</body>
+</html>
