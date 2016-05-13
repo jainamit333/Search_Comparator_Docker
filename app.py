@@ -1,16 +1,169 @@
 from flask import Flask , render_template, request
 from datetime import date , datetime
+from celery import Celery
+import redis
 
 from helpme import file_from_url , load_file_from_upload,elements_of_same_instance,add_data_to_result_to_show,compare_dict_value,compare_list_values,compare_recommendation,compare_single_value,\
     compare_unknown_element,compute_defference_in_attributes,convert_list_to_dic_and_filter,generate_key,scoop_json,start_compare_recommendations_dictionary
 
 app = Flask(__name__)
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
 
 
 
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+@celery.task
+def executeAsyncComapre(case_of_fire,old_json,new_json):
+    result_to_show = []
+    recommandation_wise_result = {}
+    attribute_difference_recommendation_wise = {}
+    attribute_difference_recommendation_wise_nested = {}
+    try:
+            old_json = file_from_url(old_json)
+            new_json = file_from_url(new_json)
+            if old_json == "Connection Error":
+                add_data_to_result_to_show(result_to_show, "Error while uploading File 1")
+                #continue
+                #return render_template('result.html', data=result_to_show,data2 = recommandation_wise_result,data3 = attribute_difference_recommendation_wise)
+            if new_json == "Connection Error":
+                add_data_to_result_to_show(result_to_show, "Error while uploading File 2")
+                #continue
+                #return render_template('result.html', data=result_to_show,data2 = recommandation_wise_result,data3 = attribute_difference_recommendation_wise)
+
+            old_json = scoop_json(old_json, 0, "results")
+            new_json = scoop_json(new_json, 0, "results")
+
+            add_data_to_result_to_show(result_to_show, 'Length of results in File 1 without filter ' + str(len(old_json)))
+            add_data_to_result_to_show(result_to_show, 'Length of results in File 2 without filter ' + str(len(new_json)))
+
+            # create dictionary and filter according to airline
+            services = request.form['service']
+            old_dictionary = convert_list_to_dic_and_filter(old_json, request.form['dictionary_id_1'],
+                                                            "REM_AFTER_LAST_UNDERSCORE", services)
+            new_dictionary = convert_list_to_dic_and_filter(new_json, request.form['dictionary_id_2'],
+                                                            "REM_AFTER_LAST_UNDERSCORE", services)
+
+            old_json = None
+            new_json = None
+
+            add_data_to_result_to_show(result_to_show, 'Length of results in File 1 after filter ' + str(len(old_dictionary)))
+            add_data_to_result_to_show(result_to_show, 'Length of results in File 2 after filter ' + str(len(new_dictionary)))
+
+
+            if not isinstance(old_dictionary, dict):
+                add_data_to_result_to_show(result_to_show, "Unable to convert dictionary for file 1 , Internal Error")
+                #continue
+                #return render_template("result.html", data=result_to_show,data2 = recommandation_wise_result,data3=attribute_difference_recommendation_wise)
+            if not isinstance(new_dictionary, dict):
+                add_data_to_result_to_show(result_to_show, "Unable to convert dictionary for file 2 , Internal Error")
+                #continue
+            print(case_of_fire)
+            start_compare_recommendations_dictionary(old_dictionary, new_dictionary, result_to_show,recommandation_wise_result,attribute_difference_recommendation_wise,attribute_difference_recommendation_wise_nested)
+
+            with open(''+str(case_of_fire).replace("/","_")+".txt",'a') as fo:
+                for a in result_to_show:
+                    fo.write(str(a))
+                    fo.write("\n")
+                fo.write("\n")
+                fo.write("\n")
+                fo.write("\n")
+
+                for a in recommandation_wise_result:
+                    fo.write("key value "+ str(a))
+                    fo.write("\n")
+                    for b in recommandation_wise_result[a]:
+                        fo.write(b)
+                        fo.write("\n")
+                    fo.write("\n")
+
+                fo.write("\n")
+                fo.write("\n")
+                fo.write("\n")
+
+                for a in attribute_difference_recommendation_wise:
+                    fo.write("key value "+ str(a))
+                    fo.write("\n")
+                    for b in recommandation_wise_result[a]:
+                        fo.write(b)
+                        fo.write("\n")
+                    fo.write("\n")
+
+                fo.write("\n")
+                fo.write("\n")
+                fo.write("\n")
+
+                for a in attribute_difference_recommendation_wise_nested:
+                    fo.write("key value "+ str(a))
+                    fo.write("\n")
+                    for b in recommandation_wise_result[a]:
+                        fo.write(b)
+                        fo.write("\n")
+                    fo.write("\n")
+
+                fo.write("\n")
+                fo.write("\n")
+                fo.write("\n")
+
+                #fo.write(str(recommandation_wise_result))
+                #fo.write(str(attribute_difference_recommendation_wise))
+                #fo.write(str(attribute_difference_recommendation_wise_nested))
+
+
+    except Exception,e:
+        print "error"
+        print str(e)
+
+
+        with open(''+str(case_of_fire).replace("/","_")+".txt",'a') as fo:
+            for a in result_to_show:
+                fo.write(str(a))
+            fo.write("\n")
+            fo.write("\n")
+            fo.write("\n")
+
+            for a in recommandation_wise_result:
+                fo.write("key value "+ str(a))
+                for b in recommandation_wise_result[a]:
+                    fo.write(b)
+                fo.write("\n")
+
+            fo.write("\n")
+            fo.write("\n")
+            fo.write("\n")
+
+            for a in attribute_difference_recommendation_wise:
+                fo.write("key value "+ str(a))
+                for b in recommandation_wise_result[a]:
+                    fo.write(b)
+                fo.write("\n")
+
+            fo.write("\n")
+            fo.write("\n")
+            fo.write("\n")
+
+            for a in attribute_difference_recommendation_wise_nested:
+                fo.write("key value "+ str(a))
+                for b in recommandation_wise_result[a]:
+                    fo.write(b)
+                fo.write("\n")
+
+            fo.write("\n")
+            fo.write("\n")
+            fo.write("\n")
+
+#task = executeAsyncComapre.apply_async()
+
+
+
+
 
 @app.route('/searchcomparebatch',methods=['POST'])
 def batch_search_comparator():
@@ -77,13 +230,13 @@ def batch_search_comparator():
             continue
             #return render_template("result.html", data=result_to_show,data2 = recommandation_wise_result,data3=attribute_difference_recommendation_wise)
 
-        start_compare_recommendations_dictionary(old_dictionary, new_dictionary, result_to_show, recommandation_wise_result,attribute_difference_recommendation_wise,attribute_difference_recommendation_wise_nested)
+        start_compare_recommendations_dictionary(old_dictionary, new_dictionary,
+                                                 result_to_show, recommandation_wise_result,
+                                                 attribute_difference_recommendation_wise,attribute_difference_recommendation_wise_nested)
 
 
     return render_template('result.html', data=case_wise_result_to_show,data2 = case_wise_recommandation_wise_result,
                            data3 = case_wise_attribute_difference_recommendation_wise,data4 = attribute_difference_recommendation_nested)
-
-
 
 @app.route('/searchcompare',methods=['POST'])
 def search_comparator():
@@ -167,13 +320,13 @@ def batch_search_comparator_lage_raho():
 
             start_date = ["1"+month_array[current_month-1]+str(current_year),"2"+month_array[current_month-1]+str(current_year),
                           "3"+month_array[current_month-1]+str(current_year),"4"+month_array[current_month-1]+str(current_year),
-                          "5"+month_array[current_month-1]+str(current_year),"6"+month_array[current_month-1]+str(current_year),"7"+month_array[current_month-1]+str(current_year)]
+                          "5"+month_array[current_month-1]+str(current_year)]#,"6"+month_array[current_month-1]+str(current_year),"7"+month_array[current_month-1]+str(current_year)]
             end_date = ["11"+month_array[current_month-1]+str(current_year),"12"+month_array[current_month-1]+str(current_year),
                         "13"+month_array[current_month-1]+str(current_year),"14"+month_array[current_month-1]+str(current_year),
-                        "15"+month_array[current_month-1]+str(current_year),"16"+month_array[current_month-1]+str(current_year),"17"+month_array[current_month-1]+ str(current_year)]
+                        "15"+month_array[current_month-1]+str(current_year)]#,"16"+month_array[current_month-1]+str(current_year),"17"+month_array[current_month-1]+ str(current_year)]
             datecounter = 0
             for datecase in start_date:
-                paxtypearray = ['A-1','A-2','A-1-C-1','A-2-C-1','A-1-C-1-I-1','A-2-C-1-I-1','A-2-C-2-I-1']
+                paxtypearray = ['A-1','A-1-C-1','A-1-C-1-I-1','A-2-C-2-I-1']
                 q1 = fromcity+"-"+tocity+"-D-"+datecase
                 if(rtcase == 'RT'):
                     q1 = q1 +"_"+tocity+"-"+fromcity+"-D-"+end_date[datecounter]
@@ -185,69 +338,67 @@ def batch_search_comparator_lage_raho():
                         case_of_fire = "/"+rtcase+"/"+q1+"/"+paxcase+"/"+cabincase
                         first_url_final = url1+case_of_fire
                         second_url_final = url2+case_of_fire
-
+                        executeAsyncComapre(case_of_fire,first_url_final,second_url_final)
                         result_to_show = []
-                        recommandation_wise_result = {}
-                        attribute_difference_recommendation_wise = {}
-                        attribute_difference_recommendation_wise_nested = {}
+                        add_data_to_result_to_show(result_to_show,first_url_final+"--------"+second_url_final)
+                        # recommandation_wise_result = {}
+                        # attribute_difference_recommendation_wise = {}
+                        # attribute_difference_recommendation_wise_nested = {}
                         case_wise_result_to_show[case_of_fire] = result_to_show
-                        case_wise_recommandation_wise_result[case_of_fire]= recommandation_wise_result
-                        case_wise_attribute_difference_recommendation_wise[case_of_fire] = attribute_difference_recommendation_wise
-                        attribute_difference_recommendation_nested[case_of_fire] = attribute_difference_recommendation_wise_nested
+                        # case_wise_recommandation_wise_result[case_of_fire]= recommandation_wise_result
+                        # case_wise_attribute_difference_recommendation_wise[case_of_fire] = attribute_difference_recommendation_wise
+                        # attribute_difference_recommendation_nested[case_of_fire] = attribute_difference_recommendation_wise_nested
+                        #
 
                         # load Files From Url
-                        old_json = file_from_url(first_url_final)
-                        new_json = file_from_url(second_url_final)
-                        if old_json == "Connection Error":
-                            add_data_to_result_to_show(result_to_show, "Error while uploading File 1")
-                            continue
-                            #return render_template('result.html', data=result_to_show,data2 = recommandation_wise_result,data3 = attribute_difference_recommendation_wise)
-                        if new_json == "Connection Error":
-                            add_data_to_result_to_show(result_to_show, "Error while uploading File 2")
-                            continue
-                            #return render_template('result.html', data=result_to_show,data2 = recommandation_wise_result,data3 = attribute_difference_recommendation_wise)
-
-                        old_json = scoop_json(old_json, 0, "results")
-                        new_json = scoop_json(new_json, 0, "results")
-
-                        add_data_to_result_to_show(result_to_show, 'Length of results in File 1 without filter ' + str(len(old_json)))
-                        add_data_to_result_to_show(result_to_show, 'Length of results in File 2 without filter ' + str(len(new_json)))
-
-                        # create dictionary and filter according to airline
-                        services = request.form['service']
-                        old_dictionary = convert_list_to_dic_and_filter(old_json, request.form['dictionary_id_1'],
-                                                        "REM_AFTER_LAST_UNDERSCORE", services)
-                        new_dictionary = convert_list_to_dic_and_filter(new_json, request.form['dictionary_id_2'],
-                                                        "REM_AFTER_LAST_UNDERSCORE", services)
-
-                        old_json = None
-                        new_json = None
-
-                        add_data_to_result_to_show(result_to_show, 'Length of results in File 1 after filter ' + str(len(old_dictionary)))
-                        add_data_to_result_to_show(result_to_show, 'Length of results in File 2 after filter ' + str(len(new_dictionary)))
-
-
-                        if not isinstance(old_dictionary, dict):
-                            add_data_to_result_to_show(result_to_show, "Unable to convert dictionary for file 1 , Internal Error")
-                            continue
-                            #return render_template("result.html", data=result_to_show,data2 = recommandation_wise_result,data3=attribute_difference_recommendation_wise)
-                        if not isinstance(new_dictionary, dict):
-                            add_data_to_result_to_show(result_to_show, "Unable to convert dictionary for file 2 , Internal Error")
-                            continue
-                            #return render_template("result.html", data=result_to_show,data2 = recommandation_wise_result,data3=attribute_difference_recommendation_wise)
-
-                        start_compare_recommendations_dictionary(old_dictionary, new_dictionary, result_to_show, recommandation_wise_result,attribute_difference_recommendation_wise,attribute_difference_recommendation_wise_nested)
+                        # old_json = file_from_url(first_url_final)
+                        # new_json = file_from_url(second_url_final)
+                        # if old_json == "Connection Error":
+                        #     add_data_to_result_to_show(result_to_show, "Error while uploading File 1")
+                        #     continue
+                        #     #return render_template('result.html', data=result_to_show,data2 = recommandation_wise_result,data3 = attribute_difference_recommendation_wise)
+                        # if new_json == "Connection Error":
+                        #     add_data_to_result_to_show(result_to_show, "Error while uploading File 2")
+                        #     continue
+                        #     #return render_template('result.html', data=result_to_show,data2 = recommandation_wise_result,data3 = attribute_difference_recommendation_wise)
+                        #
+                        # old_json = scoop_json(old_json, 0, "results")
+                        # new_json = scoop_json(new_json, 0, "results")
+                        #
+                        # add_data_to_result_to_show(result_to_show, 'Length of results in File 1 without filter ' + str(len(old_json)))
+                        # add_data_to_result_to_show(result_to_show, 'Length of results in File 2 without filter ' + str(len(new_json)))
+                        #
+                        # # create dictionary and filter according to airline
+                        # services = request.form['service']
+                        # old_dictionary = convert_list_to_dic_and_filter(old_json, request.form['dictionary_id_1'],
+                        #                                 "REM_AFTER_LAST_UNDERSCORE", services)
+                        # new_dictionary = convert_list_to_dic_and_filter(new_json, request.form['dictionary_id_2'],
+                        #                                 "REM_AFTER_LAST_UNDERSCORE", services)
+                        #
+                        # old_json = None
+                        # new_json = None
+                        #
+                        # add_data_to_result_to_show(result_to_show, 'Length of results in File 1 after filter ' + str(len(old_dictionary)))
+                        # add_data_to_result_to_show(result_to_show, 'Length of results in File 2 after filter ' + str(len(new_dictionary)))
+                        #
+                        #
+                        # if not isinstance(old_dictionary, dict):
+                        #     add_data_to_result_to_show(result_to_show, "Unable to convert dictionary for file 1 , Internal Error")
+                        #     continue
+                        #     #return render_template("result.html", data=result_to_show,data2 = recommandation_wise_result,data3=attribute_difference_recommendation_wise)
+                        # if not isinstance(new_dictionary, dict):
+                        #     add_data_to_result_to_show(result_to_show, "Unable to convert dictionary for file 2 , Internal Error")
+                        #     continue
+                        #     #return render_template("result.html", data=result_to_show,data2 = recommandation_wise_result,data3=attribute_difference_recommendation_wise)
+                        #
+                        # start_compare_recommendations_dictionary(old_dictionary, new_dictionary, result_to_show,
+                        #                                          recommandation_wise_result,
+                        #                                          attribute_difference_recommendation_wise,
+                        #                                          attribute_difference_recommendation_wise_nested)
 
 
     return render_template('result.html', data=case_wise_result_to_show,data2 = case_wise_recommandation_wise_result,
                            data3 = case_wise_attribute_difference_recommendation_wise,data4 = attribute_difference_recommendation_nested)
-
-
-
-
-
-
-
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, json
 import requests
+from celery import Celery
 
 
 
@@ -30,6 +31,8 @@ def start_compare_recommendations_dictionary(old_dictionary, new_dictionary, res
         old_data = old_dictionary[key_attr]
         compute_defference_in_attributes(old_data,new_data,difference_in_reccomendation_list)
         compare_recommendation(old_data, new_data, recommendation_list, key_attr,difference_in_reccomendation_list_nested)
+        #write to file
+
 
 
 def compare_recommendation(recommendation_old, recommendation_new, result_to_show, ket_attr,difference_in_reccomendation_list_nested):
@@ -50,9 +53,12 @@ def compare_recommendation(recommendation_old, recommendation_new, result_to_sho
 
 
 def compare_single_value(recommendation_old, recommendation_new, result_to_show, ket_attr, current_attribute_name,difference_in_reccomendation_list_nested):
+    if(isinstance(recommendation_new,(str,unicode))):
+        recommendation_new = str(recommendation_new).strip().replace("AmadeusINMPTBV2","AmadeusIN").replace("SpicejetV2","Spicejet")
+        recommendation_old.strip()
 
     if not recommendation_old == recommendation_new:
-        print "Value does not match"
+        #print "Value does not match"
         add_data_to_result_to_show(result_to_show,
                                    "Value does not match in Recommendation " + str(ket_attr) + " Attribute Name " +
                                    current_attribute_name+" with values :---- "+str(recommendation_old)+" -----  "+str(recommendation_new))
@@ -60,23 +66,23 @@ def compare_single_value(recommendation_old, recommendation_new, result_to_show,
 
 def compare_unknown_element(old_data, new_data, result_to_show, ket_attr, current_attribute_name,difference_in_reccomendation_list_nested):
     if elements_of_same_instance(old_data, new_data):
-        print "start comparing"
+        #print "start comparing"
 
         if isinstance(old_data, dict):
-            print "start dic comparision"
+            #print "start dic comparision"
             compare_dict_value(old_data,new_data,result_to_show,ket_attr,current_attribute_name,difference_in_reccomendation_list_nested)
         elif isinstance(old_data, (list, set)):
-            print "comapre list or set"
+            #print "comapre list or set"
             compare_list_values(old_data, new_data, result_to_show, ket_attr, current_attribute_name,difference_in_reccomendation_list_nested)
         elif isinstance(old_data, (str, int, float, bool,unicode)):
-            print "Compare single value"
+            #print "Compare single value"
             compare_single_value(old_data, new_data, result_to_show, ket_attr, current_attribute_name,difference_in_reccomendation_list_nested)
     else:
         add_data_to_result_to_show(result_to_show, "Recommendation is not of same type insatance for key " + ket_attr)
 
 
 def compare_list_values(list_one, list_two, result_to_show, ket_attr, current_attribute_name,difference_in_reccomendation_list_nested):
-    print "start comparing list"
+    #print "start comparing list"
     if not len(list_one) == len(list_two):
         add_data_to_result_to_show(result_to_show,
                                    "Length of List found is not equal for Recommendation " + ket_attr +
@@ -85,6 +91,8 @@ def compare_list_values(list_one, list_two, result_to_show, ket_attr, current_at
                                    " Attribute Name " + current_attribute_name+" value 1 ----"+str(list_one)+"   ----value 2 -------"+str(list_two))
     else:
         counter = 0
+        list_one.sort()
+        list_two.sort()
         for old_data in list_one:
             compare_unknown_element(old_data, list_two[counter], result_to_show, ket_attr,
                                     current_attribute_name + ":" + str(counter),difference_in_reccomendation_list_nested)
@@ -92,7 +100,7 @@ def compare_list_values(list_one, list_two, result_to_show, ket_attr, current_at
 
 
 def compare_dict_value(dict_old, dict_new, result_to_show, ket_attr, current_attribute_name,difference_in_reccomendation_list_nested):
-    print "Comparing dictionary value"
+    #print "Comparing dictionary value"
     for attribute in dict_old:
         try:
             new_value = dict_new[attribute]
@@ -127,7 +135,7 @@ def load_file_from_upload(file):
 
 
 def add_data_to_result_to_show(result_to_show, param):
-    print "adding value to result to show"
+    #print "adding value to result to show"
     result_to_show.insert(len(result_to_show), str(param))
 
 
